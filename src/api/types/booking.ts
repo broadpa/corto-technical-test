@@ -21,3 +21,10 @@ export interface AuthResponse {
   token?: string;
   reason?: string;
 }
+
+export interface BookingQuery {
+  firstname?: string;
+  lastname?: string;
+  checkin?: string;
+  checkout?: string;
+}
