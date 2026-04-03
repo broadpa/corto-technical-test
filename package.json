@@ -1,0 +1,20 @@
+{
+  "name": "corto-qe-tech-test",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:ui": "playwright test --project=ui-chromium",
+    "report": "playwright show-report",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.0",
+    "@types/node": "^24.12.2",
+    "dotenv": "^16.0.0",
+    "fast-xml-parser": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.9.3"
+  }
+}
