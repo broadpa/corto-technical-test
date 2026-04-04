@@ -1,0 +1,7 @@
+{
+  "unknownBookingId": 999999999,
+  "impossibleFilter": {
+    "firstname": "NobodyShouldEverMatchThis",
+    "lastname": "DefinitelyNotReal"
+  }
+}
