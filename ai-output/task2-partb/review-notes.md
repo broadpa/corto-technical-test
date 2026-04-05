@@ -30,7 +30,8 @@ I did **not** merge the raw output directly into the final suite. I reviewed it 
 ## Final note
 
 The AI output was useful as a starting point, but it did not meet my quality bar without review. I validated the final implementation by:
-- running the tests locally,
-- checking assertion behavior,
-- verifying cleanup,
-- and aligning the code with the design patterns used across the rest of the suite.
+
+- running the tests locally
+- checking assertion behaviour
+- verifying cleanup
+- and aligning the code with the design patterns used across the rest of the suite

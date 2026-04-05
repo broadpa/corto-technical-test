@@ -200,7 +200,7 @@ npx playwright test tests/api/booking-lifecycle.api.spec.ts --project=api
 ## Run a single UI spec
 
 ```bash
-npx playwright test tests/ui/login.ui.spec.ts --project=ui-chromium
+npx playwright test tests/ui/login.ui.spec.ts --project=ui-chromium --workers=1
 ```
 
 ## Open the HTML report
@@ -222,7 +222,7 @@ The repository includes CI workflows for both API and UI execution:
 
 The API workflow runs the API suite.
 
-The UI workflow runs the UI suite in a more conservative way against the public demo site to reduce flakiness from the sandbox environment.
+The UI workflow runs the UI suite conservatively against the public demo site to reduce flakiness from the sandbox environment.
 
 ---
 
@@ -242,12 +242,19 @@ That folder contains:
 - the raw AI output
 - review notes describing the corrections and improvements I made
 
-More broadly, I used AI as a drafting and troubleshooting aid, not as a substitute for review. I did not blindly paste generated code into the final solution.
+More broadly, I also used AI as a troubleshooting aid while stabilising the public sandbox tests. In particular, I used AI-assisted review of traces, screenshots, videos, selector behaviour, and route/timeline changes to narrow down issues such as:
 
-Before accepting any generated output, I validated it by:
+- the selected-book route on the DemoQA Book Store page
+- ambiguous or unstable UI locators
+- token setup for authenticated UI flows
+- cleanup inconsistencies in the public demo environment
+
+I did not blindly paste generated code into the final solution.
+
+Before accepting any generated output or suggested change, I validated it by:
 
 - type-checking the project
-- running the tests locally
+- rerunning the affected tests locally
 - checking assertion clarity and failure messages
 - verifying cleanup behaviour
 - keeping the code consistent with the rest of the framework structure

@@ -1,6 +1,5 @@
 import { test as base, APIRequestContext, expect } from '@playwright/test';
 import { UI_BASE_URL } from '../../src/config/env';
-import { BooksPage } from '../../src/ui/pages/books.page';
 import { LoginPage } from '../../src/ui/pages/login.page';
 import { ProfilePage } from '../../src/ui/pages/profile.page';
 import { BookStoreApiClient } from '../../src/ui/api/bookstore-api.client';
@@ -17,7 +16,6 @@ type TestUser = BookStoreUserCredentials & {
 type AuthUiFixtures = {
   bookstoreApiContext: APIRequestContext;
   bookstoreApiClient: BookStoreApiClient;
-  booksPage: BooksPage;
   loginPage: LoginPage;
   profilePage: ProfilePage;
   testUser: TestUser;
@@ -66,10 +64,6 @@ export const test = base.extend<AuthUiFixtures>({
 
   bookstoreApiClient: async ({ bookstoreApiContext }, use) => {
     await use(new BookStoreApiClient(bookstoreApiContext));
-  },
-
-  booksPage: async ({ page }, use) => {
-    await use(new BooksPage(page));
   },
 
   loginPage: async ({ page }, use) => {
