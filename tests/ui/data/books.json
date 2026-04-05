@@ -2,7 +2,8 @@
   "gitPocketGuide": {
     "title": "Git Pocket Guide",
     "author": "Richard E. Silverman",
-    "publisher": "O'Reilly Media"
+    "publisher": "O'Reilly Media",
+    "isbn": "9781449325862"
   },
   "designPatterns": {
     "title": "Learning JavaScript Design Patterns"
