@@ -2,29 +2,14 @@
 
 This repository contains my solution for the CORTO Quality Engineering technical exercise.
 
-At the current stage, the repository contains the completed **Task 2: Rest API Automation** solution, along with the shared Playwright + TypeScript project structure that will also be used for Task 1.
-
-## Framework Choice
-
-I chose **Playwright with TypeScript** for this exercise because I wanted one modern, maintainable stack that could support both API and UI automation in the same repository.
-
-That gave me a few practical benefits:
-
-- one runner for both API and UI tests
-- built-in API testing support
-- fixtures, reporting, and trace capture
-- good CI/CD support
-- TypeScript typing for shared models and helpers
-
-My main goal was to keep the project readable, easy to run, and easy to extend.
+I used **Playwright with TypeScript** so both the API and UI automation could live in the same project, share patterns, and run cleanly in CI.
 
 ## Current Scope
 
-### Completed
-- **Task 2 — Rest API Automation**
+Completed in this repository:
 
-### Not yet added
 - **Task 1 — Web UI Automation**
+- **Task 2 — Rest API Automation**
 
 ## Repository Structure
 
@@ -36,11 +21,16 @@ src/
     clients/
     types/
     utils/
+  ui/
+    api/
+    pages/
+    utils/
 
 tests/
   api/
     data/
   ui/
+    data/
 
 ai-output/
   task2-partb/
@@ -49,63 +39,94 @@ ai-output/
   workflows/
 ```
 
-## Task 2 Overview
+## Why Playwright + TypeScript
 
-The API suite targets the public **Restful Booker** API.
+I chose Playwright + TypeScript because it gave me:
 
-The suite was built to demonstrate the things called out in the exercise brief:
+- one framework for both API and UI automation
+- built-in API support
+- a modern test runner with fixtures and reporting
+- strong TypeScript typing for shared helpers and models
+- straightforward CI integration
 
-- a data-driven approach
-- positive and negative scenarios
-- passing values between endpoints
-- maintainable and repeatable design
+My goal was to keep the solution maintainable and easy for another engineer to review and run.
+
+---
+
+# Task 1 — Web UI Automation
+
+This task targets the DemoQA mini Book Store website.
+
+I intentionally left **User Registration** out of scope, which the exercise explicitly allows. For the authenticated flows, I used the Book Store API for setup and cleanup so the UI tests could stay focused on user behaviour rather than account creation and test data preparation.
+
+## Task 1 Design Approach
+
+For the UI automation, I used:
+
+- **page objects** for the main pages
+- **fixtures** to keep setup clean
+- **JSON test data** for reusable values
+- **API-assisted setup/cleanup** for authenticated flows
+- selectors based on visible behaviour where possible
+
+I kept the UI coverage focused on a small number of stable, high-value scenarios rather than trying to automate the entire site.
+
+## Task 1 UI Coverage
+
+The UI suite covers:
+
+- searching the catalog for a known title
+- confirming a no-match search hides known books
+- selecting a title and validating the selected route / visible row
+- logging in with a valid user
+- logging out from the profile page
+- confirming a pre-associated book is visible in the user’s profile collection
+
+## Task 1 Notes on Public Sandbox Behaviour
+
+A few behaviours on the public demo site affected how I designed the UI tests:
+
+1. **Book selection route**
+   - The live site behaves more like a selected search route (`/books?search=<isbn>`) than a classic standalone details page.
+   - I aligned the test with the actual stable behaviour of the public site rather than forcing a brittle expectation.
+
+2. **Authenticated setup**
+   - I used API-assisted setup for authenticated UI scenarios so the tests could focus on the UI behaviour being validated.
+   - Temporary users are created per run to keep test isolation simple.
+
+3. **Cleanup**
+   - Cleanup is best-effort because the public sandbox can be inconsistent with destructive cleanup calls.
+   - Unique users and isolated test data prevent that from affecting the core assertions.
+
+---
+
+# Task 2 — Rest API Automation
+
+This task targets the public Restful Booker API.
+
+The API suite was designed to show:
+
+- a **data-driven** approach
+- **positive and negative** coverage
+- **value passing** between endpoints
+- maintainable, reusable test structure
 - clear assertion descriptions
 
-## Design Approach
+## Task 2 Design Approach
 
-I tried to keep the API specs focused on **test intent**, not raw request plumbing.
+I kept the API specs thin and pushed the reusable logic into a few layers:
 
-To do that, I separated the project into a few simple layers:
+- **client classes** for endpoint interactions
+- **typed models** for payloads and contracts
+- **fixtures** for shared setup
+- **JSON test data** for positive and negative scenarios
+- **utility helpers** for reusable assertions, serialization, and unique data generation
 
-- **client classes** handle endpoint interactions
-- **typed models** keep payloads and contracts explicit
-- **Playwright fixtures** provide shared API setup
-- **JSON data files** drive the test inputs
-- **helper utilities** handle reusable assertions, unique test data generation, and content-type serialization
+That keeps the specs focused on the intent of the test rather than raw request plumbing.
 
-That keeps the tests easier to read and helps avoid duplication as the suite grows.
+## Task 2 API Coverage
 
-## Data-Driven Approach
-
-The test data lives under:
-
-```text
-tests/api/data/
-```
-
-This includes positive and negative test data used across the suite.
-
-I also added a small helper to generate unique guest names so repeated runs do not rely on shared record state or collide with previous data.
-
-## Value Flow Between Endpoints
-
-The suite demonstrates values flowing through the API rather than treating each call in isolation.
-
-A typical lifecycle looks like this:
-
-1. create an auth token with `POST /auth`
-2. create a booking with `POST /booking`
-3. capture the returned `bookingid`
-4. retrieve that booking with `GET /booking/:id`
-5. update it with `PUT /booking/:id`
-6. partially update it with `PATCH /booking/:id`
-7. delete it with `DELETE /booking/:id`
-
-That flow is covered in the JSON lifecycle test.
-
-## API Coverage
-
-The suite covers the documented Restful Booker endpoints, including:
+The API suite covers the documented Restful Booker endpoints, including:
 
 - `GET /ping`
 - `POST /auth`
@@ -129,84 +150,87 @@ The suite covers the documented Restful Booker endpoints, including:
   - URL-encoded
 - `DELETE /booking/:id`
 
-## Running the Project
+## Task 2 Notes on Public Sandbox Behaviour
 
-### Install dependencies
+While building the API suite, I found two public-sandbox quirks that were not stable enough for strict assertions in every variant:
+
+1. **Date filter behaviour**
+   - The date filter was inconsistent enough that exact-id assertions were unreliable in repeated runs.
+   - I kept the endpoint in coverage and validated the contract and response shape instead.
+
+2. **XML / URL-encoded boolean behaviour**
+   - In the XML and URL-encoded update flows, the public sandbox appeared to coerce `depositpaid: false` to `true`.
+   - I kept those endpoints in coverage and validated the stable fields, while full boolean update semantics remain covered in the JSON lifecycle test.
+
+---
+
+# Running the Project
+
+## Install dependencies
 
 ```bash
 npm install
 npx playwright install
 ```
 
-### Type-check the project
+## Type-check the project
 
 ```bash
 npm run typecheck
 ```
 
-### Run the API suite
+## Run the API suite
 
 ```bash
 npm run test:api
 ```
 
-### Run a single API spec
+## Run the UI suite
+
+```bash
+npm run test:ui
+```
+
+## Run a single API spec
 
 ```bash
 npx playwright test tests/api/booking-lifecycle.api.spec.ts --project=api
 ```
 
-### Open the HTML report
+## Run a single UI spec
+
+```bash
+npx playwright test tests/ui/login.ui.spec.ts --project=ui-chromium
+```
+
+## Open the HTML report
 
 ```bash
 npm run report
 ```
 
-## CI
+---
 
-A GitHub Actions workflow is included here:
+# CI
+
+The repository includes CI workflows for both API and UI execution:
 
 ```text
 .github/workflows/api-ci.yml
+.github/workflows/ui-ci.yml
 ```
 
-The workflow runs type-checking and the API suite on push and pull request events.
+The API workflow runs the API suite.
 
-## Notes on Public Sandbox Behaviour
+The UI workflow runs the UI suite in a more conservative way against the public demo site to reduce flakiness from the sandbox environment.
 
-Because this exercise uses a public sandbox, I found a couple of behaviours that were not stable enough for strict end-to-end assertions in every variant.
+---
 
-### 1. Date filter behaviour
-
-The `GET /booking` date filter did not behave consistently enough in repeated automated runs for a reliable exact-id assertion.
-
-Rather than leave a false-negative in the suite, I kept the endpoint in coverage and validated that:
-
-- the endpoint accepts date filters
-- the response succeeds
-- the response shape is correct
-
-That kept the suite repeatable and CI-friendly while still covering the endpoint.
-
-### 2. XML / URL-encoded boolean behaviour
-
-For the XML and URL-encoded update flows, the public sandbox appeared to coerce `depositpaid: false` to `true`.
-
-I did not want the suite to fail on what looked like sandbox behaviour rather than a framework issue, so I handled it this way:
-
-- full boolean update semantics are validated in the JSON lifecycle test
-- the XML and URL-encoded tests still cover those endpoints
-- those tests validate the stable fields for those content-type variants
-
-This keeps the coverage broad without baking unstable false-negatives into the suite.
-
-## AI Usage
+# AI Usage
 
 AI assistance was used during this exercise.
 
-For **Task 2 Part B**, I used AI to generate an initial draft for one endpoint and then reviewed it properly before using any of the ideas in the final solution.
-
-The following artefacts are included in the repository:
+For **Task 2 Part B**, I used AI to generate an initial draft for one endpoint and included the following in the repository:
 
 ```text
 ai-output/task2-partb/
@@ -216,24 +240,24 @@ That folder contains:
 
 - the prompt used
 - the raw AI output
-- review notes describing the issues I found and the changes I made
+- review notes describing the corrections and improvements I made
 
-More generally, I used AI as a drafting and troubleshooting aid, not as a substitute for review. I did not paste generated code into the final suite blindly.
+More broadly, I used AI as a drafting and troubleshooting aid, not as a substitute for review. I did not blindly paste generated code into the final solution.
 
-Before accepting any generated code or suggestions, I validated them by:
+Before accepting any generated output, I validated it by:
 
 - type-checking the project
 - running the tests locally
 - checking assertion clarity and failure messages
 - verifying cleanup behaviour
-- making sure the code followed the same structure and patterns as the rest of the repository
+- keeping the code consistent with the rest of the framework structure
 
 ## Final Note
 
-My aim for this task was not to produce the biggest possible test suite. It was to produce a suite that is:
+My aim was not to produce the biggest possible test suite. It was to produce something that is:
 
 - readable
 - maintainable
 - repeatable
-- honest about public sandbox quirks
+- honest about public sandbox behaviour
 - and easy for another engineer to pick up and run

@@ -1,5 +1,7 @@
 import { test } from './auth.fixtures';
 
+test.describe.configure({ mode: 'serial' });
+
 test('A valid Book Store user should be able to log in and reach the profile page', async ({
   loginPage,
   profilePage,

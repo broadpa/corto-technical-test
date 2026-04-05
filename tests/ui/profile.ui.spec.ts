@@ -1,12 +1,16 @@
 import { test, expect } from './auth.fixtures';
 import books from './data/books.json';
 
+test.describe.configure({ mode: 'serial' });
+
 test('A logged-in user should see a pre-associated book in the profile collection', async ({
   bookstoreApiClient,
   loginPage,
   profilePage,
   testUser,
 }) => {
+  // Use the API for setup so the UI test stays focused on profile behaviour rather
+  // than account/book preparation.
   const addBookResponse = await bookstoreApiClient.addBook(
     testUser.userId,
     books.gitPocketGuide.isbn,
@@ -25,38 +29,36 @@ test('A logged-in user should see a pre-associated book in the profile collectio
     await profilePage.expectLoadedForUser(testUser.userName);
     await profilePage.expectBookInCollection(books.gitPocketGuide.title);
   } finally {
-    const cleanupTokenResponse = await bookstoreApiClient.generateToken({
-      userName: testUser.userName,
-      password: testUser.password,
-    });
+    let cleanupToken: string | undefined;
 
-    if (!cleanupTokenResponse.ok()) {
+    try {
+      const cleanupTokenResponse = await bookstoreApiClient.generateToken({
+        userName: testUser.userName,
+        password: testUser.password,
+      });
+
+      if (cleanupTokenResponse.ok()) {
+        const cleanupTokenBody = await cleanupTokenResponse.json();
+        cleanupToken = cleanupTokenBody.token as string | undefined;
+      }
+    } catch {
       console.warn(
-        `Best-effort cleanup: token generation for book removal failed with status ${cleanupTokenResponse.status()}`,
+        'Best-effort cleanup: could not obtain a fresh token for book removal',
       );
-      return;
     }
 
-    const cleanupTokenBody = await cleanupTokenResponse.json();
-    const cleanupToken = cleanupTokenBody.token as string | undefined;
-
-    if (!cleanupToken) {
-      console.warn(
-        'Best-effort cleanup: token generation for book removal returned no token',
+    if (cleanupToken) {
+      const deleteBookResponse = await bookstoreApiClient.deleteBook(
+        testUser.userId,
+        books.gitPocketGuide.isbn,
+        cleanupToken,
       );
-      return;
-    }
 
-    const deleteBookResponse = await bookstoreApiClient.deleteBook(
-      testUser.userId,
-      books.gitPocketGuide.isbn,
-      cleanupToken,
-    );
-
-    if (!deleteBookResponse.ok()) {
-      console.warn(
-        `Best-effort cleanup: delete book failed with status ${deleteBookResponse.status()}`,
-      );
+      if (!deleteBookResponse.ok()) {
+        console.warn(
+          `Best-effort cleanup: delete book failed with status ${deleteBookResponse.status()}`,
+        );
+      }
     }
   }
 });

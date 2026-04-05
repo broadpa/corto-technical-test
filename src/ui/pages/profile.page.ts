@@ -4,11 +4,16 @@ import { BasePage } from './base.page';
 export class ProfilePage extends BasePage {
   private readonly userNameValue: Locator;
   private readonly logoutButton: Locator;
+  private readonly loadingLabel: Locator;
 
   constructor(page: Page) {
     super(page);
     this.userNameValue = page.locator('#userName-value');
-    this.logoutButton = page.getByRole('button', { name: /log\s*out/i });
+    this.logoutButton = page
+      .locator('button')
+      .filter({ hasText: /log\s*out/i })
+      .first();
+    this.loadingLabel = page.locator('#loading-label');
   }
 
   async expectLoadedForUser(userName: string): Promise<void> {
@@ -18,6 +23,12 @@ export class ProfilePage extends BasePage {
       this.page,
       'Successful login should navigate to the profile page',
     ).toHaveURL(/\/profile$/);
+
+    await this.loadingLabel
+      .waitFor({ state: 'hidden', timeout: 10_000 })
+      .catch(() => {
+        // The loading label is not always present. Continue if it never appears.
+      });
 
     await expect(
       this.userNameValue,
@@ -33,6 +44,12 @@ export class ProfilePage extends BasePage {
   }
 
   async expectBookInCollection(title: string): Promise<void> {
+    await this.loadingLabel
+      .waitFor({ state: 'hidden', timeout: 10_000 })
+      .catch(() => {
+        // The loading label is not always present. Continue if it never appears.
+      });
+
     await expect(
       this.page.getByRole('link', { name: title, exact: true }),
       `Book "${title}" should be visible in the user collection`,

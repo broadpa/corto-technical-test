@@ -23,21 +23,32 @@ type AuthUiFixtures = {
   testUser: TestUser;
 };
 
-async function getFreshToken(
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForToken(
   bookstoreApiClient: BookStoreApiClient,
   credentials: BookStoreUserCredentials,
-): Promise<string | undefined> {
-  const tokenResponse = await bookstoreApiClient.generateToken(credentials);
+): Promise<string> {
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    const tokenResponse = await bookstoreApiClient.generateToken(credentials);
 
-  if (!tokenResponse.ok()) {
-    console.warn(
-      `Best-effort cleanup: token generation failed with status ${tokenResponse.status()}`,
-    );
-    return undefined;
+    if (tokenResponse.ok()) {
+      const tokenBody = await tokenResponse.json();
+      const token = tokenBody.token as string | undefined;
+
+      if (token) {
+        return token;
+      }
+    }
+
+    await sleep(1000);
   }
 
-  const tokenBody = await tokenResponse.json();
-  return tokenBody.token as string | undefined;
+  throw new Error(
+    'API setup should return a token for the created user after retrying',
+  );
 }
 
 export const test = base.extend<AuthUiFixtures>({
@@ -88,29 +99,25 @@ export const test = base.extend<AuthUiFixtures>({
       'Created Book Store user should return a userID',
     ).toBeTruthy();
 
-    const tokenResponse = await bookstoreApiClient.generateToken(credentials);
-    expect(
-      tokenResponse.ok(),
-      'API setup should generate a token for the created user successfully',
-    ).toBeTruthy();
-
-    const tokenBody = await tokenResponse.json();
-    const token = tokenBody.token as string | undefined;
-
-    expect(
-      token,
-      'API setup should return a token for the created user',
-    ).toBeTruthy();
+    const token = await waitForToken(bookstoreApiClient, credentials);
 
     await use({
       ...credentials,
       userId: userId!,
-      token: token!,
+      token,
     });
 
     // Public sandbox cleanup is best-effort. Unique users keep runs isolated even if
     // deletion occasionally fails in the demo environment.
-    const cleanupToken = await getFreshToken(bookstoreApiClient, credentials);
+    let cleanupToken: string | undefined;
+
+    try {
+      cleanupToken = await waitForToken(bookstoreApiClient, credentials);
+    } catch {
+      console.warn(
+        'Best-effort cleanup: could not obtain a fresh token for user deletion',
+      );
+    }
 
     if (cleanupToken && userId) {
       const deleteUserResponse = await bookstoreApiClient.deleteUser(
