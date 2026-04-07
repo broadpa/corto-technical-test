@@ -259,6 +259,10 @@ Before accepting any generated output or suggested change, I validated it by:
 - verifying cleanup behaviour
 - keeping the code consistent with the rest of the framework structure
 
+I also used AI to help refine parts of the README for clarity, structure, and completeness.
+
+I treated this the same way I treated code-related AI assistance: I did not accept generated wording blindly. I reviewed the final documentation against the repository contents, the exercise brief, the actual commands required to run the project, and the trade-offs I had made during implementation to ensure the README remained accurate and representative of the final solution.
+
 ## Final Note
 
 My aim was not to produce the biggest possible test suite. It was to produce something that is:
